@@ -1,52 +1,130 @@
-[tool.poetry]
+[project]
 name = "yutto"
-version = "2.0.0-beta.10"
+version = "2.0.0"
 description = "🧊 一个可爱且任性的 B 站视频下载器"
-authors = ["Nyakku Shigure <sigure.qaq@gmail.com>"]
-license = "GPL-3.0"
 readme = "README.md"
-homepage = "https://github.com/SigureMo/yutto"
-repository = "https://github.com/SigureMo/yutto"
+requires-python = ">=3.9"
+authors = [{ name = "Nyakku Shigure", email = "sigure.qaq@gmail.com" }]
 keywords = ["python", "bilibili", "video", "downloader", "danmaku"]
+license = { text = "GPL-3.0" }
 classifiers = [
   "Environment :: Console",
   "Operating System :: OS Independent",
   "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Typing :: Typed",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
 ]
+dependencies = [
+  "aiofiles>=24.1.0",
+  "biliass==2.2.0",
+  "colorama>=0.4.6; sys_platform == 'win32'",
+  "typing-extensions>=4.12.2",
+  "dict2xml>=1.7.6",
+  "httpx[http2,socks]>=0.28.1",
+  "tomli>=2.0.2; python_version < '3.11'",
+  "pydantic>=2.10.6",
+]
 
-[tool.poetry.dependencies]
-python = "^3.9.0"
-aiohttp = "^3.7.4"
-aiofiles = ">=0.7,<0.9"
-biliass = "1.3.4"
-uvloop = { version = "0.16.0", optional = true }
-dicttoxml = "^1.7.4"
-colorama = { version = "^0.4.4", markers = "sys_platform == 'win32'"}
+[project.urls]
+Homepage = "https://github.com/yutto-dev/yutto"
+Documentation = "https://github.com/yutto-dev/yutto"
+Repository = "https://github.com/yutto-dev/yutto"
+Issues = "https://github.com/yutto-dev/yutto/issues"
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.0"
-black = "^22.1"
-
-[tool.poetry.extras]
-uvloop = ["uvloop"]
-
-[tool.poetry.scripts]
+[project.scripts]
 yutto = "yutto.__main__:main"
 
-[tool.poetry.urls]
-"Bug Tracker" = "https://github.com/SigureMo/yutto/issues"
+[dependency-groups]
+dev = [
+  "pyright>=1.1.393",
+  "ruff>=0.9.4",
+  "typos>=1.29.5",
+  "pytest>=8.3.4",
+  "pytest-rerunfailures>=15.0",
+  "syrupy>=4.8.1",
+  "pytest-codspeed>=3.1.2",
+]
+
+[tool.uv.sources]
+biliass = { workspace = true }
+
+[tool.uv.workspace]
+members = ["packages/*"]
 
 [tool.pytest.ini_options]
-markers = ["api", "e2e", "downloader", "ci_skip", "ci_only"]
+markers = ["api", "e2e", "processor", "biliass", "ignore", "ci_skip", "ci_only"]
 
-[tool.black]
+[tool.pyright]
+include = ["src/yutto", "packages/biliass/src/biliass", "tests"]
+pythonVersion = "3.9"
+typeCheckingMode = "strict"
+
+[tool.ruff]
 line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+  # Pyflakes
+  "F",
+  # Pycodestyle
+  "E",
+  "W",
+  # Isort
+  "I",
+  # Comprehensions
+  "C4",
+  # Debugger
+  "T100",
+  # Pyupgrade
+  "UP",
+  # Flake8-pyi
+  "PYI",
+  # Bugbear
+  "B",
+  # Pylint
+  "PLE",
+  # Flake8-simplify
+  "SIM101",
+  # Flake8-use-pathlib
+  "PTH",
+  # Pygrep-hooks
+  "PGH004",
+  # Flake8-type-checking
+  "TC",
+  # Flake8-raise
+  "RSE",
+  # Refurb
+  "FURB",
+  # Flake8-future-annotations
+  "FA",
+  # Yesqa
+  "RUF100",
+]
+ignore = [
+  "E501", # line too long, duplicate with ruff fmt
+  "F401", # imported but unused, duplicate with pyright
+  "F841", # local variable is assigned to but never used, duplicate with pyright
+]
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+known-first-party = ["yutto"]
+combine-as-imports = true
+
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = ["pydantic.BaseModel"]
+
+[tool.ruff.lint.per-file-ignores]
+"setup.py" = ["I"]
 
 [build-system]
-requires = ["poetry_core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

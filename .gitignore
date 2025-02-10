@@ -118,18 +118,30 @@ dmypy.json
 .DS_Store
 
 # Media files
+*.m4a
 *.aac
 *.mp3
+*.flac
 *.mp4
+*.mkv
+*.mov
 *.m4s
 *.xml
 *.pb
 *.ass
 *.srt
 *.nfo
+*.jpg
+*.ini
 
 # test files
 *.test.py
 
 # logs
 log
+
+# test files
+__test_files__
+
+# config file
+yutto.toml

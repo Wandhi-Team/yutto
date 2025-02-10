@@ -1,23 +1,20 @@
-import aiohttp
+from __future__ import annotations
+
 import pytest
 
-from yutto.api.danmaku import get_danmaku, get_protobuf_danmaku, get_xml_danmaku
-from yutto._typing import CId
-from yutto.utils.fetcher import Fetcher
-from yutto.utils.functools import as_sync
+from yutto._typing import AvId, CId
+from yutto.api.danmaku import get_danmaku, get_protobuf_danmaku_segment, get_xml_danmaku
+from yutto.utils.fetcher import FetcherContext, create_client
+from yutto.utils.funcutils import as_sync
 
 
 @pytest.mark.api
 @as_sync
 async def test_xml_danmaku():
     cid = CId("144541892")
-    async with aiohttp.ClientSession(
-        headers=Fetcher.headers,
-        cookies=Fetcher.cookies,
-        trust_env=Fetcher.trust_env,
-        timeout=aiohttp.ClientTimeout(total=5),
-    ) as session:
-        danmaku = await get_xml_danmaku(session, cid=cid)
+    ctx = FetcherContext()
+    async with create_client() as client:
+        danmaku = await get_xml_danmaku(ctx, client, cid=cid)
         assert len(danmaku) > 0
 
 
@@ -25,13 +22,9 @@ async def test_xml_danmaku():
 @as_sync
 async def test_protobuf_danmaku():
     cid = CId("144541892")
-    async with aiohttp.ClientSession(
-        headers=Fetcher.headers,
-        cookies=Fetcher.cookies,
-        trust_env=Fetcher.trust_env,
-        timeout=aiohttp.ClientTimeout(total=5),
-    ) as session:
-        danmaku = await get_protobuf_danmaku(session, cid=cid, segment_id=1)
+    ctx = FetcherContext()
+    async with create_client() as client:
+        danmaku = await get_protobuf_danmaku_segment(ctx, client, cid=cid, segment_id=1)
         assert len(danmaku) > 0
 
 
@@ -39,13 +32,10 @@ async def test_protobuf_danmaku():
 @as_sync
 async def test_danmaku():
     cid = CId("144541892")
-    async with aiohttp.ClientSession(
-        headers=Fetcher.headers,
-        cookies=Fetcher.cookies,
-        trust_env=Fetcher.trust_env,
-        timeout=aiohttp.ClientTimeout(total=5),
-    ) as session:
-        danmaku = await get_danmaku(session, cid=cid, save_type="ass", last_n_segments=2)
+    avid = AvId("BV1q7411v7Vd")
+    ctx = FetcherContext()
+    async with create_client() as client:
+        danmaku = await get_danmaku(ctx, client, cid=cid, avid=avid, save_type="ass")
         assert len(danmaku["data"]) > 0
         assert danmaku["source_type"] == "xml"
         assert danmaku["save_type"] == "ass"

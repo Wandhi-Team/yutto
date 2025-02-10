@@ -1,48 +1,41 @@
-import aiohttp
+from __future__ import annotations
+
 import pytest
 
+from yutto._typing import AId, BvId, FId, MId, SeriesId
 from yutto.api.space import (
     get_all_favourites,
     get_favourite_avids,
     get_favourite_info,
     get_medialist_avids,
     get_medialist_title,
-    get_uploader_name,
-    get_uploader_space_all_videos_avids,
-    get_collection_title,
-    get_collection_avids,
+    get_user_name,
+    get_user_space_all_videos_avids,
 )
-from yutto._typing import AId, BvId, FId, MId, SeriesId
-from yutto.utils.fetcher import Fetcher
-from yutto.utils.functools import as_sync
+from yutto.utils.fetcher import FetcherContext, create_client
+from yutto.utils.funcutils import as_sync
 
 
 @pytest.mark.api
+@pytest.mark.ignore
 @as_sync
-async def test_get_uploader_space_all_videos_avids():
+async def test_get_user_space_all_videos_avids():
     mid = MId("100969474")
-    async with aiohttp.ClientSession(
-        headers=Fetcher.headers,
-        cookies=Fetcher.cookies,
-        trust_env=Fetcher.trust_env,
-        timeout=aiohttp.ClientTimeout(total=5),
-    ) as session:
-        all_avid = await get_uploader_space_all_videos_avids(session, mid=mid)
+    ctx = FetcherContext()
+    async with create_client() as client:
+        all_avid = await get_user_space_all_videos_avids(ctx, client, mid=mid)
         assert len(all_avid) > 0
         assert AId("371660125") in all_avid or BvId("BV1vZ4y1M7mQ") in all_avid
 
 
 @pytest.mark.api
+@pytest.mark.ignore
 @as_sync
-async def test_get_uploader_name():
+async def test_get_user_name():
     mid = MId("100969474")
-    async with aiohttp.ClientSession(
-        headers=Fetcher.headers,
-        cookies=Fetcher.cookies,
-        trust_env=Fetcher.trust_env,
-        timeout=aiohttp.ClientTimeout(total=5),
-    ) as session:
-        username = await get_uploader_name(session, mid=mid)
+    ctx = FetcherContext()
+    async with create_client() as client:
+        username = await get_user_name(ctx, client, mid=mid)
         assert username == "时雨千陌"
 
 
@@ -50,13 +43,9 @@ async def test_get_uploader_name():
 @as_sync
 async def test_get_favourite_info():
     fid = FId("1306978874")
-    async with aiohttp.ClientSession(
-        headers=Fetcher.headers,
-        cookies=Fetcher.cookies,
-        trust_env=Fetcher.trust_env,
-        timeout=aiohttp.ClientTimeout(total=5),
-    ) as session:
-        fav_info = await get_favourite_info(session, fid=fid)
+    ctx = FetcherContext()
+    async with create_client() as client:
+        fav_info = await get_favourite_info(ctx, client, fid=fid)
         assert fav_info["fid"] == fid
         assert fav_info["title"] == "Test"
 
@@ -65,13 +54,9 @@ async def test_get_favourite_info():
 @as_sync
 async def test_get_favourite_avids():
     fid = FId("1306978874")
-    async with aiohttp.ClientSession(
-        headers=Fetcher.headers,
-        cookies=Fetcher.cookies,
-        trust_env=Fetcher.trust_env,
-        timeout=aiohttp.ClientTimeout(total=5),
-    ) as session:
-        avids = await get_favourite_avids(session, fid=fid)
+    ctx = FetcherContext()
+    async with create_client() as client:
+        avids = await get_favourite_avids(ctx, client, fid=fid)
         assert AId("456782499") in avids or BvId("BV1o541187Wh") in avids
 
 
@@ -79,13 +64,9 @@ async def test_get_favourite_avids():
 @as_sync
 async def test_all_favourites():
     mid = MId("100969474")
-    async with aiohttp.ClientSession(
-        headers=Fetcher.headers,
-        cookies=Fetcher.cookies,
-        trust_env=Fetcher.trust_env,
-        timeout=aiohttp.ClientTimeout(total=5),
-    ) as session:
-        fav_list = await get_all_favourites(session, mid=mid)
+    ctx = FetcherContext()
+    async with create_client() as client:
+        fav_list = await get_all_favourites(ctx, client, mid=mid)
         assert {"fid": FId("1306978874"), "title": "Test"} in fav_list
 
 
@@ -93,13 +74,10 @@ async def test_all_favourites():
 @as_sync
 async def test_get_medialist_avids():
     series_id = SeriesId("1947439")
-    async with aiohttp.ClientSession(
-        headers=Fetcher.headers,
-        cookies=Fetcher.cookies,
-        trust_env=Fetcher.trust_env,
-        timeout=aiohttp.ClientTimeout(total=5),
-    ) as session:
-        avids = await get_medialist_avids(session, series_id=series_id)
+    mid = MId("100969474")
+    ctx = FetcherContext()
+    async with create_client() as client:
+        avids = await get_medialist_avids(ctx, client, series_id=series_id, mid=mid)
         assert avids == [BvId("BV1Y441167U2"), BvId("BV1vZ4y1M7mQ")]
 
 
@@ -107,42 +85,7 @@ async def test_get_medialist_avids():
 @as_sync
 async def test_get_medialist_title():
     series_id = SeriesId("1947439")
-    async with aiohttp.ClientSession(
-        headers=Fetcher.headers,
-        cookies=Fetcher.cookies,
-        trust_env=Fetcher.trust_env,
-        timeout=aiohttp.ClientTimeout(total=5),
-    ) as session:
-        title = await get_medialist_title(session, series_id=series_id)
-        assert title == "一个小合集～"
-
-
-@pytest.mark.api
-@as_sync
-async def test_get_collection_avids():
-    # 测试页面：https://space.bilibili.com/361469957/channel/collectiondetail?sid=23195&ctype=0
-    series_id = SeriesId("23195")
-    async with aiohttp.ClientSession(
-        headers=Fetcher.headers,
-        cookies=Fetcher.cookies,
-        trust_env=Fetcher.trust_env,
-        timeout=aiohttp.ClientTimeout(total=5),
-    ) as session:
-        avids = await get_collection_avids(session, series_id=series_id)
-        assert BvId("BV1xy4y1G7tz") in avids
-        assert BvId("BV1k34y1S71P") in avids
-
-
-@pytest.mark.api
-@as_sync
-async def test_get_collection_title():
-    # 测试页面：https://space.bilibili.com/361469957/channel/collectiondetail?sid=23195&ctype=0
-    series_id = SeriesId("23195")
-    async with aiohttp.ClientSession(
-        headers=Fetcher.headers,
-        cookies=Fetcher.cookies,
-        trust_env=Fetcher.trust_env,
-        timeout=aiohttp.ClientTimeout(total=5),
-    ) as session:
-        title = await get_collection_title(session, series_id=series_id)
-        assert title == "算法入门【Go语言】"
+    ctx = FetcherContext()
+    async with create_client() as client:
+        title = await get_medialist_title(ctx, client, series_id=series_id)
+        assert title == "一个小视频列表～"

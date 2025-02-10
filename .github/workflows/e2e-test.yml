@@ -1,21 +1,29 @@
 name: e2e Test
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  merge_group:
+  workflow_dispatch:
 
 jobs:
   test-e2e:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         architecture: ["x64"]
-    name: Python ${{ matrix.python-version }} on ${{ matrix.architecture }} test
+    name: Python ${{ matrix.python-version }} on ${{ matrix.architecture }} e2e test
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
       - name: Install python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.architecture }}
@@ -26,30 +34,21 @@ jobs:
           sudo apt install ffmpeg
 
       - name: Install just
-        uses: extractions/setup-just@v1
+        uses: extractions/setup-just@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: Gr1N/setup-poetry@v7
-      - uses: actions/cache@v2
-        id: poetry-cache
-        with:
-          path: |
-            **/.venv
-          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
-
       - name: Install dependencies
-        if: steps.poetry-cache.outputs.cache-hit != 'true'
         run: |
-          poetry install
+          just ci-install
 
       - name: e2e without subprocess
         run: |
-          poetry run yutto -v
-          poetry run yutto -h
-          poetry run yutto https://www.bilibili.com/video/BV1AZ4y147Yg -w
-          just clean
+          uv run yutto -v
+          uv run yutto -h
+          uv run yutto https://www.bilibili.com/video/BV1AZ4y147Yg -w -d __test_files__
+          rm -rf __test_files__
 
       - name: e2e test
         run: |
-          poetry run pytest -m "e2e and not ci_skip"
+          just ci-e2e-test
